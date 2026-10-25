@@ -25,12 +25,18 @@ function stripHttpsUserInfo(href: string): string {
   }
 }
 
+// The API now returns ssh.bitbucket.org, but known_hosts and ssh_config entries target bitbucket.org;
+// both serve the same host key, and BatchMode clones fail on an unrecorded host name.
+function canonicalSshHost(href: string): string {
+  return href.replace(/^(ssh:\/\/)?([^@/]+@)?ssh\.bitbucket\.org(?=[:/])/i, '$1$2bitbucket.org')
+}
+
 function cloneHref(raw: RawBitbucketRepository, protocol: 'https' | 'ssh'): string | null {
   const href = raw.links?.clone?.find((link) => link.name === protocol)?.href?.trim()
   if (!href) {
     return null
   }
-  return protocol === 'https' ? stripHttpsUserInfo(href) : href
+  return protocol === 'https' ? stripHttpsUserInfo(href) : canonicalSshHost(href)
 }
 
 export function mapBitbucketRepository(

@@ -26,6 +26,19 @@ describe('mapBitbucketRepository', () => {
     })
   })
 
+  it('clones over SSH through bitbucket.org, the host users have trusted', () => {
+    const mapped = (href: string) =>
+      mapBitbucketRepository({ full_name: 'acme/api', links: { clone: [{ name: 'ssh', href }] } })
+        ?.sshCloneUrl
+    expect(mapped('git@ssh.bitbucket.org:acme/api.git')).toBe('git@bitbucket.org:acme/api.git')
+    expect(mapped('ssh://git@ssh.bitbucket.org/acme/api.git')).toBe(
+      'ssh://git@bitbucket.org/acme/api.git'
+    )
+    expect(mapped('git@ssh.bitbucket.org.evil.example:acme/api.git')).toBe(
+      'git@ssh.bitbucket.org.evil.example:acme/api.git'
+    )
+  })
+
   it('drops repositories that cannot be cloned', () => {
     expect(mapBitbucketRepository({ full_name: 'acme/api', links: { clone: [] } })).toBeNull()
     expect(mapBitbucketRepository({ name: 'api' })).toBeNull()
